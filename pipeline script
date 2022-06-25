@@ -1,0 +1,32 @@
+node
+{
+   def mavenhome=tool name: "maven 3.8.5" 
+   //properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), pipelineTriggers([pollSCM('')])])
+    properties([buildDiscarder(logRotator(artifactDaysToKeepStr: '', artifactNumToKeepStr: '', daysToKeepStr: '', numToKeepStr: '5')), pipelineTriggers([pollSCM('')])])
+    stage ('checkout stage')
+    {
+     git branch: 'development', credentialsId: 'e1df56dc-6913-4101-9d90-9c97ebeb1fd6', url: 'https://github.com/github-admini/maven-web-application.git'
+    }
+    stage ('to build')
+    {
+        sh ("${mavenhome}/bin/mvn clean package")
+    }
+    stage('to generate report')
+    {
+        sh ("${mavenhome}/bin/mvn sonar:sonar")
+    }
+    stage("to upload artifactory repo")
+    {
+        sh ("${mavenhome}/bin/mvn deploy")
+    
+    }
+    stage("to deplot to tomcat  server")
+    {
+      sshagent(['c2d053a4-3a70-45fc-9ae0-a3a81adc4689']) {
+    // some block
+
+ sh "scp -o StrictHostKeyChecking=no target/maven-web-application.war ec2-user@13.233.186.248:/opt/apache-tomcat-9.0.64/webapps"
+    }
+    }
+    }
+     
